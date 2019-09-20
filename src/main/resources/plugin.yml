@@ -1,0 +1,16 @@
+name: SnazzyFarming
+author: Faceguy
+version: ${project.version}
+main: com.faceguy.snazzy.farming.SnazzyFarmingPlugin
+api-version: 1.14
+depend:
+  - Strife
+commands:
+  sfarming:
+    description: Main command for SnazzyFarming
+    usage: /sfarm
+    aliases: [sf, sfarm]
+permissions:
+  sfarm.admin:
+    default: op
+    description: Giver user all permission
