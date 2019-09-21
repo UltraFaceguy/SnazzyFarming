@@ -1,9 +1,21 @@
-messages:
-  announce-catch: -1
-  announce-new-1st: -1
-  only-announce-fishing-rod: false
-  broadcast-start: true
-  broadcast-stop: true
-  show-top-on-ending: true
-  contest-bar-color: 'blue'
-  top-number: 3
+generic-crop-format:
+  name: "{quality-color}{name}"
+  lore:
+    - "&fQuality: {quality-color}{quality-stars}"
+
+croptions:
+  WHEAT:
+    seeds-drop:
+      material: WHEAT_SEEDS
+      chance: 0.25
+      quality-increase-chance: 0.1
+      quality-increase-chance-per-level: 0.01
+      min-amount: 1
+      max-amount: 1
+    drop1:
+      material: WHEAT
+      chance: 1.0
+      min-amount: 1
+      max-amount: 2
+      min-bonus-per-level: 0.01
+      max-bonus-per-level: 0.02

@@ -23,7 +23,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.ItemStack;
 
-public class CropBreakListener implements Listener {
+public class CropListener implements Listener {
 
   private SnazzyFarmingPlugin plugin;
   private String farmingInfo;
@@ -32,7 +32,7 @@ public class CropBreakListener implements Listener {
   private static final Map<UUID, Long> FARMING_NO_SPAM = new HashMap<>();
   private static final int FARMING_SPAM_CD = 10000;
 
-  public CropBreakListener(SnazzyFarmingPlugin plugin) {
+  public CropListener(SnazzyFarmingPlugin plugin) {
     this.plugin = plugin;
     this.farmingInfo = "&eBreak fully grown crops to harvest them, and auto-replant. "
         + "To remove crops, break them with a hoe!";
@@ -60,7 +60,7 @@ public class CropBreakListener implements Listener {
     }
     if (event.isCancelled()) {
       event.getBlockPlaced().getWorld().spawnParticle(Particle.SMOKE_NORMAL,
-          event.getBlockPlaced().getLocation().add(0.5, 0.5, 0.5), 8, 0.25, 0.25, 0.25);
+          event.getBlockPlaced().getLocation().add(0.5, 0.5, 0.5), 8, 0.25, 0.25, 0.25, 0);
       sendFarmingSpam(event.getPlayer(), farmingNoPlace);
     }
   }
@@ -75,6 +75,9 @@ public class CropBreakListener implements Listener {
     if (!plugin.getCropManager().isFarmingHandled(data.getMaterial())) {
       return;
     }
+    if (!plugin.getCropManager().isConfiguredForFarming(data.getMaterial())) {
+      return;
+    }
 
     event.setCancelled(true);
     event.setDropItems(false);
@@ -82,13 +85,13 @@ public class CropBreakListener implements Listener {
     if (data.getMaterial() == Material.SUGAR_CANE || data.getMaterial() == Material.BAMBOO ||
         data.getMaterial() == Material.CACTUS) {
       Set<Block> pillarBlocks = new HashSet<>();
-      if (event.getBlock().getRelative(BlockFace.DOWN).getType() == data.getMaterial()) {
-        pillarBlocks.add(event.getBlock());
-      }
-      Block currblock = event.getBlock().getRelative(BlockFace.UP);
-      while (currblock.getType() == data.getMaterial() && pillarBlocks.size() < 10) {
+      Block currblock = event.getBlock();
+      if (event.getBlock().getRelative(BlockFace.DOWN).getType() != data.getMaterial()) {
         currblock = currblock.getRelative(BlockFace.UP);
+      }
+      while (currblock.getType() == data.getMaterial() && pillarBlocks.size() < 10) {
         pillarBlocks.add(currblock);
+        currblock = currblock.getRelative(BlockFace.UP);
       }
       if (pillarBlocks.isEmpty()) {
         event.setCancelled(false);
@@ -96,13 +99,13 @@ public class CropBreakListener implements Listener {
         return;
       }
       for (Block b : pillarBlocks) {
-        plugin.getStrifePlugin().getSkillExperienceManager()
-            .addExperience(event.getPlayer(), LifeSkillType.FARMING, 5, false);
         plugin.getCropManager().spawnCropDrops(event.getPlayer(), b);
         b.getWorld().spawnParticle(Particle.BLOCK_CRACK,
             b.getLocation().add(0.5, 0.5, 0.5), 10, 0, 0, 0, b.getBlockData());
         b.setType(Material.AIR);
       }
+      plugin.getStrifePlugin().getSkillExperienceManager()
+          .addExperience(event.getPlayer(), LifeSkillType.FARMING, pillarBlocks.size() * 2, false);
       return;
     }
 
@@ -137,8 +140,8 @@ public class CropBreakListener implements Listener {
     cropData.setAge(0);
     event.getBlock().setBlockData(cropData);
 
-    plugin.getStrifePlugin().getSkillExperienceManager()
-        .addExperience(event.getPlayer(), LifeSkillType.FARMING, 8, false);
+    plugin.getStrifePlugin().getSkillExperienceManager().addExperience(
+        event.getPlayer(), LifeSkillType.FARMING, cropData.getMaximumAge() * 3, false);
     plugin.getCropManager().spawnCropDrops(event.getPlayer(), event.getBlock());
   }
 
