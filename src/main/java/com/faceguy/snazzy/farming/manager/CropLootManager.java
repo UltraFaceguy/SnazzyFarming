@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
@@ -56,12 +57,13 @@ public class CropLootManager {
       }
       ItemStack stack = new ItemStack(data.getMaterial(), amount);
       if (quality > 1) {
-        String name = genericName.replace("{quality-color}", "" + getRarityColor(quality));
-        name = name.replace("{name}", WordUtils.capitalize(data.getMaterial().toString()));
+        String name = genericName.replace("{quality-color}", "" + getQualityColor(quality));
+        name = name.replace("{name}",
+            WordUtils.capitalize(data.getMaterial().toString().toLowerCase().replaceAll("_", " ")));
 
         List<String> lore = new ArrayList<>();
         for (String s : genericLore) {
-          s = s.replace("{quality-color}", "" + getRarityColor(quality));
+          s = s.replace("{quality-color}", "" + getQualityColor(quality));
           s = s.replace("{quality-stars}", getQualityStars(quality));
           lore.add(s);
         }
@@ -93,10 +95,10 @@ public class CropLootManager {
   }
 
   private String getQualityStars(int quality) {
-    return IntStream.range(0, quality).mapToObj(i -> "✪") + "";
+    return IntStream.range(0, quality).mapToObj(i -> "✪").collect(Collectors.joining(""));
   }
 
-  private ChatColor getRarityColor(int i) {
+  private ChatColor getQualityColor(int i) {
     switch (i) {
       case 1:
         return ChatColor.WHITE;
