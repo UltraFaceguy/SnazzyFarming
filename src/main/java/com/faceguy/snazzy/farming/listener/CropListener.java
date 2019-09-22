@@ -3,24 +3,32 @@ package com.faceguy.snazzy.farming.listener;
 import com.faceguy.snazzy.farming.SnazzyFarmingPlugin;
 import com.tealcube.minecraft.bukkit.facecore.utilities.MessageUtils;
 import info.faceland.strife.data.champion.LifeSkillType;
+import info.faceland.strife.util.PlayerDataUtil;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event.Result;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockFertilizeEvent;
+import org.bukkit.event.block.BlockGrowEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
 public class CropListener implements Listener {
@@ -32,11 +40,24 @@ public class CropListener implements Listener {
   private static final Map<UUID, Long> FARMING_NO_SPAM = new HashMap<>();
   private static final int FARMING_SPAM_CD = 10000;
 
+  private double perPillarExp;
+  private double perStageExp;
+  private double perBlockExp;
+  private double fertilizeFalloffLevel;
+  private double baseFertilizeExp;
+  private double fertilizeFailMult;
+
   public CropListener(SnazzyFarmingPlugin plugin) {
     this.plugin = plugin;
     this.farmingInfo = "&eBreak fully grown crops to harvest them, and auto-replant. "
         + "To remove crops, break them with a hoe!";
     this.farmingNoPlace = "&eSorry, you have to wait for it to grow naturally!";
+    perPillarExp = plugin.getBaseConfig().getDouble("experience.per-pillar-height");
+    perStageExp = plugin.getBaseConfig().getDouble("experience.per-growth-stage");
+    perBlockExp = plugin.getBaseConfig().getDouble("experience.per-block-crop");
+    fertilizeFalloffLevel = plugin.getBaseConfig().getDouble("experience.fertilize-falloff-level");
+    baseFertilizeExp = plugin.getBaseConfig().getDouble("experience.base-fertilize-exp");
+    fertilizeFailMult = plugin.getBaseConfig().getDouble("experience.fertilize-failure-multiplier");
   }
 
   @EventHandler(priority = EventPriority.HIGHEST)
@@ -60,16 +81,62 @@ public class CropListener implements Listener {
     }
     if (event.isCancelled()) {
       event.getBlockPlaced().getWorld().spawnParticle(Particle.SMOKE_NORMAL,
-          event.getBlockPlaced().getLocation().add(0.5, 0.5, 0.5), 8, 0.25, 0.25, 0.25, 0);
+          event.getBlockPlaced().getLocation(), 8, 0.25, 0.25, 0.25, 0);
       sendFarmingSpam(event.getPlayer(), farmingNoPlace);
     }
   }
 
   @EventHandler(priority = EventPriority.HIGHEST)
-  public void onCropBreak(BlockBreakEvent event) {
+  public void onCropFertilize(BlockFertilizeEvent event) {
+    if (!plugin.getCropManager().isFarmingHandled(event.getBlock().getType()) || event.getBlocks()
+        .isEmpty()) {
+      return;
+    }
+    double level = PlayerDataUtil.getLifeSkillLevel(event.getPlayer(), LifeSkillType.FARMING);
+    double effectiveLevel = PlayerDataUtil.getEffectiveLifeSkill(event.getPlayer(),
+        LifeSkillType.FARMING, true);
+    double exp = baseFertilizeExp;
+    Bukkit.getLogger().warning("e: " + exp);
+    exp *= 1 - (level / fertilizeFalloffLevel);
+    Bukkit.getLogger().warning("e: " + exp);
+    if (Math.random() > 0.4 + 0.015 * effectiveLevel) {
+      event.getBlocks().clear();
+      exp *= fertilizeFailMult;
+      Bukkit.getLogger().warning("e: " + exp);
+    }
+    Bukkit.getLogger().warning("e: " + exp);
+    if (exp > 0) {
+      plugin.getStrifePlugin().getSkillExperienceManager().addExperience(
+          event.getPlayer(), LifeSkillType.FARMING, exp, false);
+    }
+  }
+
+  @EventHandler(priority = EventPriority.HIGHEST)
+  public void onBerryHarvest(PlayerInteractEvent event) {
     if (event.isCancelled()) {
       return;
     }
+    if (event.getClickedBlock() != null
+        && event.getClickedBlock().getType() != Material.SWEET_BERRY_BUSH) {
+      return;
+    }
+    Ageable cropData = (Ageable) event.getClickedBlock().getBlockData();
+    if (cropData.getAge() > 1) {
+      if (cropData.getAge() == 3 || cropData.getAge() == 2 && Math.random() > 0.5) {
+        plugin.getStrifePlugin().getSkillExperienceManager().addExperience(
+            event.getPlayer(), LifeSkillType.FARMING, cropData.getAge() * perStageExp, false);
+        plugin.getCropManager().spawnCropDrops(event.getPlayer(), event.getClickedBlock());
+      }
+      event.getClickedBlock().getWorld().playSound(event.getClickedBlock().getLocation(),
+          Sound.ITEM_SWEET_BERRIES_PICK_FROM_BUSH, 1, 1);
+      cropData.setAge(1);
+      event.getClickedBlock().setBlockData(cropData);
+      event.setCancelled(true);
+    }
+  }
+
+  @EventHandler(priority = EventPriority.HIGHEST)
+  public void onCropBreak(BlockBreakEvent event) {
 
     BlockData data = event.getBlock().getBlockData();
     if (!plugin.getCropManager().isFarmingHandled(data.getMaterial())) {
@@ -104,8 +171,8 @@ public class CropListener implements Listener {
             b.getLocation().add(0.5, 0.5, 0.5), 10, 0, 0, 0, b.getBlockData());
         b.setType(Material.AIR);
       }
-      plugin.getStrifePlugin().getSkillExperienceManager()
-          .addExperience(event.getPlayer(), LifeSkillType.FARMING, pillarBlocks.size() * 2, false);
+      plugin.getStrifePlugin().getSkillExperienceManager().addExperience(event.getPlayer(),
+          LifeSkillType.FARMING, pillarBlocks.size() * perPillarExp, false);
       return;
     }
 
@@ -116,7 +183,7 @@ public class CropListener implements Listener {
         return;
       }
       plugin.getStrifePlugin().getSkillExperienceManager()
-          .addExperience(event.getPlayer(), LifeSkillType.FARMING, 22, false);
+          .addExperience(event.getPlayer(), LifeSkillType.FARMING, perBlockExp, false);
       plugin.getCropManager().spawnCropDrops(event.getPlayer(), event.getBlock());
       event.getBlock().getWorld().spawnParticle(Particle.BLOCK_CRACK,
           event.getBlock().getLocation().add(0.5, 0.5, 0.5), 10, 0, 0, 0, data);
@@ -141,7 +208,7 @@ public class CropListener implements Listener {
     event.getBlock().setBlockData(cropData);
 
     plugin.getStrifePlugin().getSkillExperienceManager().addExperience(
-        event.getPlayer(), LifeSkillType.FARMING, cropData.getMaximumAge() * 3, false);
+        event.getPlayer(), LifeSkillType.FARMING, cropData.getMaximumAge() * perStageExp, false);
     plugin.getCropManager().spawnCropDrops(event.getPlayer(), event.getBlock());
   }
 

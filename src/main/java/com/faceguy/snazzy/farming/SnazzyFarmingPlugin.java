@@ -47,6 +47,10 @@ public class SnazzyFarmingPlugin extends FacePlugin {
     HandlerList.unregisterAll(this);
   }
 
+  public VersionedSmartYamlConfiguration getBaseConfig() {
+    return configYAML;
+  }
+
   public StrifePlugin getStrifePlugin() {
     return strifePlugin;
   }

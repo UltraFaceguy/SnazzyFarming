@@ -1,3 +1,18 @@
+
+experience:
+  # Rewards per stage, wheat, cocoa, beets, carrots
+  per-growth-stage: 1.3
+  # Rewards per height of cactus, sugar cane, bamboo
+  per-pillar-height: 4
+  # Rewards when you break a grown melon or pumpkin
+  per-block-crop: 24
+  # The farming level at which fertilize doesn't grant xp
+  fertilize-falloff-level: 20
+  # Multiplier applied if you fail to fertilize
+  fertilize-failure-multiplier: 0.5
+  # How much xp should fertilizing grant?
+  base-fertilize-exp: 2
+
 generic-crop-format:
   name: "{quality-color}{name}"
   lore:
