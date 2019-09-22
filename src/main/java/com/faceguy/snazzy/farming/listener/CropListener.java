@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
@@ -19,14 +18,11 @@ import org.bukkit.block.data.Ageable;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event.Result;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockFertilizeEvent;
-import org.bukkit.event.block.BlockGrowEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
@@ -96,15 +92,11 @@ public class CropListener implements Listener {
     double effectiveLevel = PlayerDataUtil.getEffectiveLifeSkill(event.getPlayer(),
         LifeSkillType.FARMING, true);
     double exp = baseFertilizeExp;
-    Bukkit.getLogger().warning("e: " + exp);
     exp *= 1 - (level / fertilizeFalloffLevel);
-    Bukkit.getLogger().warning("e: " + exp);
     if (Math.random() > 0.4 + 0.015 * effectiveLevel) {
       event.getBlocks().clear();
       exp *= fertilizeFailMult;
-      Bukkit.getLogger().warning("e: " + exp);
     }
-    Bukkit.getLogger().warning("e: " + exp);
     if (exp > 0) {
       plugin.getStrifePlugin().getSkillExperienceManager().addExperience(
           event.getPlayer(), LifeSkillType.FARMING, exp, false);
