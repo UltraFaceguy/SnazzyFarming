@@ -23,12 +23,9 @@ import org.bukkit.inventory.ItemStack;
 public class CropLootManager {
 
   private Map<Material, List<CropDropData>> dropsMap = new HashMap<>();
+  private Map<Integer, String> prefixes = new HashMap<>();
   private String genericName;
   private List<String> genericLore;
-
-  public void addDrops(Material material, List<CropDropData> dropList) {
-    dropsMap.put(material, dropList);
-  }
 
   public void spawnCropDrops(Player player, Block block) {
     double level = PlayerDataUtil.getEffectiveLifeSkill(player, LifeSkillType.FARMING, true);
@@ -57,21 +54,26 @@ public class CropLootManager {
       }
       ItemStack stack = new ItemStack(data.getMaterial(), amount);
       if (quality > 1) {
-        String name = genericName.replace("{quality-color}", "" + getQualityColor(quality));
+        String name = applyPlaceholders(genericName, quality);
         name = name.replace("{name}",
             WordUtils.capitalize(data.getMaterial().toString().toLowerCase().replaceAll("_", " ")));
 
         List<String> lore = new ArrayList<>();
         for (String s : genericLore) {
-          s = s.replace("{quality-color}", "" + getQualityColor(quality));
-          s = s.replace("{quality-stars}", getQualityStars(quality));
-          lore.add(s);
+          lore.add(applyPlaceholders(s, quality));
         }
         ItemStackExtensionsKt.setDisplayName(stack, TextUtils.color(name));
         ItemStackExtensionsKt.setLore(stack, TextUtils.color(lore));
       }
       block.getWorld().dropItemNaturally(block.getLocation(), stack);
     }
+  }
+
+  private String applyPlaceholders(String originalString, int quality) {
+    return originalString
+        .replace("{quality-color}", "" + getQualityColor(quality))
+        .replace("{quality-stars}", getQualityStars(quality))
+        .replace("{quality-prefix}", getQualityPrefix(quality));
   }
 
   public boolean isFarmingHandled(Material material) {
@@ -115,8 +117,16 @@ public class CropLootManager {
     }
   }
 
+  private String getQualityPrefix(int i) {
+    return prefixes.getOrDefault(i, "");
+  }
+
   public boolean isConfiguredForFarming(Material material) {
     return dropsMap.containsKey(material);
+  }
+
+  public void addPrefix(int quality, String prefix) {
+    prefixes.put(quality, prefix);
   }
 
   public void setGenericName(String genericName) {
@@ -155,11 +165,11 @@ public class CropLootManager {
         data.setBonusMax(dropSection.getInt("max-bonus-per-level", 0));
         data.setQualityChance(dropSection.getDouble("quality-increase-chance", 0.1));
         data.setQualityChancePerLevel(
-            dropSection.getDouble("quality-increase-chance-per-level", 0.1));
+            dropSection.getDouble("quality-increase-chance-per-level", 0.0001));
         Bukkit.getLogger().info("Loaded item for " + material + ": " + dropKey);
         dataList.add(data);
       }
-      addDrops(material, dataList);
+      dropsMap.put(material, dataList);
     }
   }
 }

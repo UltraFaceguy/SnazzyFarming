@@ -13,8 +13,18 @@ experience:
   # How much xp should fertilizing grant?
   base-fertilize-exp: 2
 
+unique-crops:
+  quality-to-upgrade-to-unique: 5
+  quality-to-unique-chance: 1.0
+
+language:
+  quality-prefix-2: "Pretty Good"
+  quality-prefix-3: "Kinda Great"
+  quality-prefix-4: "Pretty Snazzy"
+  quality-prefix-5: "Legendary"
+
 generic-crop-format:
-  name: "{quality-color}{name}"
+  name: "{quality-color}{quality-prefix}{name}"
   lore:
     - "&fQuality: {quality-color}{quality-stars}"
 

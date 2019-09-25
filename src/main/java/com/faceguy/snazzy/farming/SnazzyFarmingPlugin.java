@@ -35,6 +35,10 @@ public class SnazzyFarmingPlugin extends FacePlugin {
     cropLootManager = new CropLootManager();
     cropLootManager.setGenericName(settings.getString("config.generic-crop-format.name"));
     cropLootManager.setGenericList(settings.getStringList("config.generic-crop-format.lore"));
+    cropLootManager.addPrefix(2, settings.getString("config.language.quality-prefix-2"));
+    cropLootManager.addPrefix(3, settings.getString("config.language.quality-prefix-3"));
+    cropLootManager.addPrefix(4, settings.getString("config.language.quality-prefix-4"));
+    cropLootManager.addPrefix(5, settings.getString("config.language.quality-prefix-5"));
 
     ConfigurationSection croptions = configYAML.getConfigurationSection("croptions");
     cropLootManager.loadCroptions(croptions);

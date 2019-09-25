@@ -48,12 +48,12 @@ public class CropListener implements Listener {
     this.farmingInfo = "&eBreak fully grown crops to harvest them, and auto-replant. "
         + "To remove crops, break them with a hoe!";
     this.farmingNoPlace = "&eSorry, you have to wait for it to grow naturally!";
-    perPillarExp = plugin.getBaseConfig().getDouble("experience.per-pillar-height");
-    perStageExp = plugin.getBaseConfig().getDouble("experience.per-growth-stage");
-    perBlockExp = plugin.getBaseConfig().getDouble("experience.per-block-crop");
-    fertilizeFalloffLevel = plugin.getBaseConfig().getDouble("experience.fertilize-falloff-level");
-    baseFertilizeExp = plugin.getBaseConfig().getDouble("experience.base-fertilize-exp");
-    fertilizeFailMult = plugin.getBaseConfig().getDouble("experience.fertilize-failure-multiplier");
+    perPillarExp = plugin.getBaseConfig().getDouble("experience.per-pillar-height", 1);
+    perStageExp = plugin.getBaseConfig().getDouble("experience.per-growth-stage", 1);
+    perBlockExp = plugin.getBaseConfig().getDouble("experience.per-block-crop", 1);
+    fertilizeFalloffLevel = plugin.getBaseConfig().getDouble("experience.fertilize-falloff-level", 100);
+    baseFertilizeExp = plugin.getBaseConfig().getDouble("experience.base-fertilize-exp", 1);
+    fertilizeFailMult = plugin.getBaseConfig().getDouble("experience.fertilize-failure-multiplier", 0.5);
   }
 
   @EventHandler(priority = EventPriority.HIGHEST)
