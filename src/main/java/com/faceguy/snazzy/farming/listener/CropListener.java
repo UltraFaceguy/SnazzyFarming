@@ -84,8 +84,11 @@ public class CropListener implements Listener {
 
   @EventHandler(priority = EventPriority.HIGHEST)
   public void onCropFertilize(BlockFertilizeEvent event) {
-    if (!plugin.getCropManager().isFarmingHandled(event.getBlock().getType()) || event.getBlocks()
-        .isEmpty()) {
+    if (event.isCancelled()) {
+      return;
+    }
+    if (!plugin.getCropManager().isFarmingHandled(event.getBlock().getType()) ||
+        event.getBlocks().isEmpty()) {
       return;
     }
     double level = PlayerDataUtil.getLifeSkillLevel(event.getPlayer(), LifeSkillType.FARMING);
@@ -103,11 +106,9 @@ public class CropListener implements Listener {
     }
   }
 
-  @EventHandler(priority = EventPriority.HIGHEST)
+  @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
   public void onBerryHarvest(PlayerInteractEvent event) {
-    if (event.isCancelled()) {
-      return;
-    }
+
     if (event.getClickedBlock() != null
         && event.getClickedBlock().getType() != Material.SWEET_BERRY_BUSH) {
       return;
@@ -127,7 +128,7 @@ public class CropListener implements Listener {
     }
   }
 
-  @EventHandler(priority = EventPriority.HIGHEST)
+  @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
   public void onCropBreak(BlockBreakEvent event) {
 
     BlockData data = event.getBlock().getBlockData();
